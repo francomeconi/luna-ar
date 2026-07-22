@@ -1,0 +1,39 @@
+TERRAZA AL COSMOS - PROTOTIPO AR LUNA
+========================================
+
+Esta carpeta tiene casi todo listo. Falta UN solo paso manual (2 minutos)
+porque ese paso requiere usar la cámara/procesador del navegador y no se
+puede hacer desde acá.
+
+PASO 1 - Generar el archivo de reconocimiento (targets.mind)
+--------------------------------------------------------------
+1. Andá a: https://hiukim.github.io/mind-ar-js-doc/tools/compile/
+2. Arrastrá el archivo "foto-referencia.jpg" (está en esta misma carpeta)
+   al recuadro de la página.
+3. Apretá "Start".
+4. Cuando termine, apretá el botón "Download" -> se descarga "targets.mind".
+5. Copiá ese archivo "targets.mind" DENTRO de esta carpeta (junto a index.html),
+   reemplazando si ya existe uno.
+
+PASO 2 - Subir la carpeta a Netlify
+--------------------------------------------------------------
+1. Andá a: https://app.netlify.com/drop
+2. Arrastrá esta carpeta completa (luna-ar) a la página.
+3. En unos segundos te da una URL pública, tipo:
+   https://algo-random-123.netlify.app
+4. Abrí esa URL en tu teléfono (o generá un QR con esa URL) y probá.
+
+PASO 3 - Probar
+--------------------------------------------------------------
+1. Abrí la URL en el navegador del celular (Chrome o Safari).
+2. Dale permiso a la cámara cuando lo pida.
+3. Apuntá la cámara a la foto de la Luna (podés usar foto-referencia.jpg
+   en otra pantalla, o imprimirla) y deberían aparecer los 20 nombres
+   ancladas sobre la imagen.
+
+Notas:
+- Esto es un prototipo con la imagen de referencia liviana (1600px).
+  Para la versión final del stand, lo ideal es compilar el target con
+  la foto en la resolución final de impresión para mejor tracking.
+- Si el reconocimiento tarda o falla, probar con mejor luz y foto bien
+  plana/sin reflejos.

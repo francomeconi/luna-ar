@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Terraza al Cosmos - AR Luna</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<script>
+AFRAME.registerComponent('screen-label', {
+  schema: { label: { type: 'string' } },
+  init: function () {
+    var overlay = document.getElementById('overlay');
+
+    // area de toque (invisible, mas grande que el punto real)
+    this.hit = document.createElement('div');
+    this.hit.className = 'hit';
+
+    // punto visible chico
+    this.dot = document.createElement('div');
+    this.dot.className = 'dot';
+    this.hit.appendChild(this.dot);
+
+    // linea hacia el texto (se muestra solo si revealed)
+    this.line = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.line.classList.add('leader-svg');
+    this.lineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this.line.appendChild(this.lineEl);
+
+    // texto
+    this.textEl = document.createElement('div');
+    this.textEl.className = 'feature-label';
+
+    overlay.appendChild(this.line);
+    overlay.appendChild(this.textEl);
+    overlay.appendChild(this.hit);
+
+    this.vec = new THREE.Vector3();
+    this.revealed = false;
+    this.fullText = this.data.label;
+    this.typing = null;
+
+    var self = this;
+    this.hit.addEventListener('click', function (e) {
+      e.stopPropagation();
+      self.toggle();
+    });
+  },
+  toggle: function () {
+    this.revealed = !this.revealed;
+    this.dot.classList.toggle('active', this.revealed);
+    if (this.revealed) {
+      this.startTyping();
+    } else {
+      clearInterval(this.typing);
+      this.textEl.textContent = '';
+      this.textEl.classList.remove('visible');
+      this.line.classList.remove('visible');
+    }
+  },
+  startTyping: function () {
+    var self = this;
+    var i = 0;
+    this.textEl.textContent = '';
+    this.textEl.classList.add('visible');
+    this.line.classList.add('visible');
+    clearInterval(this.typing);
+    this.typing = setInterval(function () {
+      i++;
+      self.textEl.textContent = self.fullText.slice(0, i);
+      if (i >= self.fullText.length) clearInterval(self.typing);
+    }, 28);
+  },
+  tick: function () {
+    var camera = this.el.sceneEl.camera;
+    if (!camera || !window.__arFound) {
+      this.hit.style.display = 'none';
+      this.line.classList.remove('visible');
+      this.textEl.classList.remove('visible');
+      return;
+    }
+    this.el.object3D.getWorldPosition(this.vec);
+    this.vec.project(camera);
+    if (this.vec.z >= 1) {
+      this.hit.style.display = 'none';
+      return;
+    }
+    this.hit.style.display = 'block';
+    var x = (this.vec.x * 0.5 + 0.5) * window.innerWidth;
+    var y = (-this.vec.y * 0.5 + 0.5) * window.innerHeight;
+    this.hit.style.left = x + 'px';
+    this.hit.style.top = y + 'px';
+
+    if (this.revealed) {
+      var lx = x + 34, ly = y - 30;
+      this.textEl.style.left = lx + 'px';
+      this.textEl.style.top = ly + 'px';
+      this.lineEl.setAttribute('x1', x);
+      this.lineEl.setAttribute('y1', y);
+      this.lineEl.setAttribute('x2', lx);
+      this.lineEl.setAttribute('y2', ly);
+    }
+  },
+  remove: function () {
+    clearInterval(this.typing);
+    this.hit.remove();
+    this.line.remove();
+    this.textEl.remove();
+  }
+});
+window.__arFound = false;
+</script>
+<style>
+  body { margin:0; overflow:hidden; font-family:-apple-system,sans-serif; }
+  #loading { position:fixed; inset:0; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; z-index:999; font-size:16px; text-align:center; padding:20px; }
+
+  #overlay { position:fixed; inset:0; pointer-events:none; z-index:10; }
+
+  .hit {
+    position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px;
+    pointer-events:auto; display:flex; align-items:center; justify-content:center;
+  }
+  .dot {
+    width:7px; height:7px; border-radius:50%;
+    background:#e0a04a; border:1px solid rgba(255,255,255,0.8);
+    box-shadow:0 0 0 0 rgba(224,160,74,0.6);
+    animation: pulse 2.2s infinite;
+    transition: transform 0.15s ease;
+  }
+  .dot.active {
+    background:#fff; animation:none; transform:scale(1.15);
+  }
+  @keyframes pulse {
+    0%   { box-shadow:0 0 0 0 rgba(224,160,74,0.55); }
+    70%  { box-shadow:0 0 0 9px rgba(224,160,74,0); }
+    100% { box-shadow:0 0 0 0 rgba(224,160,74,0); }
+  }
+
+  .leader-svg {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; opacity:0; transition:opacity 0.2s ease; z-index:11;
+  }
+  .leader-svg.visible { opacity:1; }
+  .leader-svg line { stroke:rgba(255,255,255,0.55); stroke-width:1; }
+
+  .feature-label {
+    position:absolute; transform:translate(0,-100%);
+    color:#fff; font-size:14px; font-weight:500; letter-spacing:0.2px;
+    white-space:nowrap; text-shadow:0 1px 4px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5);
+    opacity:0; transition:opacity 0.2s ease; pointer-events:none; z-index:12;
+  }
+  .feature-label.visible { opacity:1; }
+
+  #hint {
+    position:fixed; left:0; right:0; bottom:36px; z-index:20;
+    text-align:center; color:#fff; font-size:14px; padding:0 20px;
+    text-shadow:0 1px 6px rgba(0,0,0,0.6); transition:opacity 0.4s ease; pointer-events:none;
+  }
+  #hint.hidden { opacity:0; }
+</style>
+</head>
+<body>
+<div id="loading">Cargando reconocimiento de la Luna...<br>(permití el acceso a la cámara cuando lo pida)</div>
+
+<div id="overlay"></div>
+<div id="hint" class="hidden">Apuntá la cámara a la foto de la Luna — tocá los puntos</div>
+
+<a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: no; uiLoading: no; filterMinCF: 0.0001; filterBeta: 100; warmupTolerance: 5; missTolerance: 5;"
+  color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights"
+  vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+
+  <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+
+  <a-entity id="target" mindar-image-target="targetIndex: 0">
+      <a-entity position="-0.115 -0.0827 0" screen-label="label: Mar de la Serenidad"></a-entity>
+      <a-entity position="0.036 0.0073 0" screen-label="label: Ptolomeo"></a-entity>
+      <a-entity position="0.047 0.0267 0" screen-label="label: Alphonsus"></a-entity>
+      <a-entity position="0.055 0.042 0" screen-label="label: Arzachel"></a-entity>
+      <a-entity position="-0.056 -0.0994 0" screen-label="label: Montes Apeninos"></a-entity>
+      <a-entity position="-0.151 -0.16 0" screen-label="label: Aristóteles"></a-entity>
+      <a-entity position="-0.143 -0.1434 0" screen-label="label: Eudoxos"></a-entity>
+      <a-entity position="0.086 -0.1821 0" screen-label="label: Aristarco"></a-entity>
+      <a-entity position="0.092 -0.118 0" screen-label="label: Kepler"></a-entity>
+      <a-entity position="0.017 -0.098 0" screen-label="label: Copérnico"></a-entity>
+      <a-entity position="-0.123 0.014 0" screen-label="label: Mar de la Tranquilidad"></a-entity>
+      <a-entity position="-0.164 0.0954 0" screen-label="label: Mar de la Fecundidad"></a-entity>
+      <a-entity position="-0.221 0.034 0" screen-label="label: Mar de las Crisis"></a-entity>
+      <a-entity position="-0.065 0.084 0" screen-label="label: Teófilo"></a-entity>
+      <a-entity position="-0.028 -0.16 0" screen-label="label: Mare Imbrium (Mar de las Lluvias)"></a-entity>
+      <a-entity position="-0.092 0.1067 0" screen-label="label: Mare Nectaris (Mar del Néctar)"></a-entity>
+      <a-entity position="0.102 0.1087 0" screen-label="label: Tycho"></a-entity>
+      <a-entity position="-0.091 -0.1934 0" screen-label="label: Plato"></a-entity>
+      <a-entity position="0.095 0.024 0" screen-label="label: Mare Nubium (Mar de las Nubes)"></a-entity>
+      <a-entity position="-0.046 -0.0587 0" screen-label="label: Mare Vaporum (Mar de los Vapores)"></a-entity>
+  </a-entity>
+
+</a-scene>
+
+<script>
+  document.querySelector('a-scene').addEventListener('renderstart', () => {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('hint').classList.remove('hidden');
+  });
+  var target = document.getElementById('target');
+  target.addEventListener('targetFound', function () {
+    window.__arFound = true;
+    document.getElementById('hint').classList.add('hidden');
+  });
+  target.addEventListener('targetLost', function () {
+    window.__arFound = false;
+    document.getElementById('hint').classList.remove('hidden');
+  });
+</script>
+</body>
+</html>
