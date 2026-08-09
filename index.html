@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Terraza al Cosmos - AR Luna</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Terraza al Cosmos - AR (prueba)</title>
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 <script>
@@ -11,47 +14,32 @@ AFRAME.registerComponent('screen-label', {
   schema: { label: { type: 'string' } },
   init: function () {
     var overlay = document.getElementById('overlay');
-
-    // area de toque (invisible, mas grande que el punto real)
     this.hit = document.createElement('div');
     this.hit.className = 'hit';
-
-    // punto visible chico
     this.dot = document.createElement('div');
     this.dot.className = 'dot';
     this.hit.appendChild(this.dot);
-
-    // linea hacia el texto (se muestra solo si revealed)
     this.line = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this.line.classList.add('leader-svg');
     this.lineEl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     this.line.appendChild(this.lineEl);
-
-    // texto
     this.textEl = document.createElement('div');
     this.textEl.className = 'feature-label';
-
     overlay.appendChild(this.line);
     overlay.appendChild(this.textEl);
     overlay.appendChild(this.hit);
-
     this.vec = new THREE.Vector3();
     this.revealed = false;
     this.fullText = this.data.label;
     this.typing = null;
-
     var self = this;
-    this.hit.addEventListener('click', function (e) {
-      e.stopPropagation();
-      self.toggle();
-    });
+    this.hit.addEventListener('click', function (e) { e.stopPropagation(); self.toggle(); });
   },
   toggle: function () {
     this.revealed = !this.revealed;
     this.dot.classList.toggle('active', this.revealed);
-    if (this.revealed) {
-      this.startTyping();
-    } else {
+    if (this.revealed) { this.startTyping(); }
+    else {
       clearInterval(this.typing);
       this.textEl.textContent = '';
       this.textEl.classList.remove('visible');
@@ -59,8 +47,7 @@ AFRAME.registerComponent('screen-label', {
     }
   },
   startTyping: function () {
-    var self = this;
-    var i = 0;
+    var self = this; var i = 0;
     this.textEl.textContent = '';
     this.textEl.classList.add('visible');
     this.line.classList.add('visible');
@@ -73,7 +60,7 @@ AFRAME.registerComponent('screen-label', {
   },
   tick: function () {
     var camera = this.el.sceneEl.camera;
-    if (!camera || !window.__arFound) {
+    if (!camera || !window.__moonFound) {
       this.hit.style.display = 'none';
       this.line.classList.remove('visible');
       this.textEl.classList.remove('visible');
@@ -81,89 +68,68 @@ AFRAME.registerComponent('screen-label', {
     }
     this.el.object3D.getWorldPosition(this.vec);
     this.vec.project(camera);
-    if (this.vec.z >= 1) {
-      this.hit.style.display = 'none';
-      return;
-    }
+    if (this.vec.z >= 1) { this.hit.style.display = 'none'; return; }
     this.hit.style.display = 'block';
     var x = (this.vec.x * 0.5 + 0.5) * window.innerWidth;
     var y = (-this.vec.y * 0.5 + 0.5) * window.innerHeight;
     this.hit.style.left = x + 'px';
     this.hit.style.top = y + 'px';
-
     if (this.revealed) {
       var lx = x + 34, ly = y - 30;
       this.textEl.style.left = lx + 'px';
       this.textEl.style.top = ly + 'px';
-      this.lineEl.setAttribute('x1', x);
-      this.lineEl.setAttribute('y1', y);
-      this.lineEl.setAttribute('x2', lx);
-      this.lineEl.setAttribute('y2', ly);
+      this.lineEl.setAttribute('x1', x); this.lineEl.setAttribute('y1', y);
+      this.lineEl.setAttribute('x2', lx); this.lineEl.setAttribute('y2', ly);
     }
   },
   remove: function () {
     clearInterval(this.typing);
-    this.hit.remove();
-    this.line.remove();
-    this.textEl.remove();
+    this.hit.remove(); this.line.remove(); this.textEl.remove();
   }
 });
-window.__arFound = false;
+window.__moonFound = false;
+
+var NEBULA_DATA = {
+  1: { titulo: "Orión", catalogo: "M42", tipo: "Nebulosa de emisión", constelacion: "Orión", distancia: "≈1.344 años luz" },
+  2: { titulo: "Pilares de la Creación", catalogo: "M16", tipo: "Nebulosa de emisión", constelacion: "Serpiente", distancia: "≈7.000 años luz" },
+  3: { titulo: "Carina", catalogo: "NGC 3372", tipo: "Nebulosa de emisión", constelacion: "Carina", distancia: "≈7.500 años luz" }
+};
 </script>
 <style>
   body { margin:0; overflow:hidden; font-family:-apple-system,sans-serif; }
   #loading { position:fixed; inset:0; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; z-index:999; font-size:16px; text-align:center; padding:20px; }
-
   #overlay { position:fixed; inset:0; pointer-events:none; z-index:10; }
-
-  .hit {
-    position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px;
-    pointer-events:auto; display:flex; align-items:center; justify-content:center;
-  }
-  .dot {
-    width:7px; height:7px; border-radius:50%;
-    background:#e0a04a; border:1px solid rgba(255,255,255,0.8);
-    box-shadow:0 0 0 0 rgba(224,160,74,0.6);
-    animation: pulse 2.2s infinite;
-    transition: transform 0.15s ease;
-  }
-  .dot.active {
-    background:#fff; animation:none; transform:scale(1.15);
-  }
-  @keyframes pulse {
-    0%   { box-shadow:0 0 0 0 rgba(224,160,74,0.55); }
-    70%  { box-shadow:0 0 0 9px rgba(224,160,74,0); }
-    100% { box-shadow:0 0 0 0 rgba(224,160,74,0); }
-  }
-
-  .leader-svg {
-    position:fixed; top:0; left:0; width:100%; height:100%;
-    pointer-events:none; opacity:0; transition:opacity 0.2s ease; z-index:11;
-  }
+  .hit { position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px; pointer-events:auto; display:flex; align-items:center; justify-content:center; }
+  .dot { width:7px; height:7px; border-radius:50%; background:#e0a04a; border:1px solid rgba(255,255,255,0.8); box-shadow:0 0 0 0 rgba(224,160,74,0.6); animation: pulse 2.2s infinite; transition: transform 0.15s ease; }
+  .dot.active { background:#fff; animation:none; transform:scale(1.15); }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(224,160,74,0.55); } 70% { box-shadow:0 0 0 9px rgba(224,160,74,0); } 100% { box-shadow:0 0 0 0 rgba(224,160,74,0); } }
+  .leader-svg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; opacity:0; transition:opacity 0.2s ease; z-index:11; }
   .leader-svg.visible { opacity:1; }
   .leader-svg line { stroke:rgba(255,255,255,0.55); stroke-width:1; }
-
-  .feature-label {
-    position:absolute; transform:translate(0,-100%);
-    color:#fff; font-size:14px; font-weight:500; letter-spacing:0.2px;
-    white-space:nowrap; text-shadow:0 1px 4px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5);
-    opacity:0; transition:opacity 0.2s ease; pointer-events:none; z-index:12;
-  }
+  .feature-label { position:absolute; transform:translate(0,-100%); color:#fff; font-size:14px; font-weight:500; letter-spacing:0.2px; white-space:nowrap; text-shadow:0 1px 4px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.5); opacity:0; transition:opacity 0.2s ease; pointer-events:none; z-index:12; }
   .feature-label.visible { opacity:1; }
-
-  #hint {
-    position:fixed; left:0; right:0; bottom:36px; z-index:20;
-    text-align:center; color:#fff; font-size:14px; padding:0 20px;
-    text-shadow:0 1px 6px rgba(0,0,0,0.6); transition:opacity 0.4s ease; pointer-events:none;
-  }
+  #hint { position:fixed; left:0; right:0; bottom:36px; z-index:20; text-align:center; color:#fff; font-size:14px; padding:0 20px; text-shadow:0 1px 6px rgba(0,0,0,0.6); transition:opacity 0.4s ease; pointer-events:none; }
   #hint.hidden { opacity:0; }
+  #nebulaPanel {
+    position:fixed; top:24px; left:20px; right:20px; max-width:420px;
+    font-family:'Courier New', ui-monospace, monospace;
+    color:#eaf6ff; z-index:30; pointer-events:none;
+    text-shadow:0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.6);
+    opacity:0; transition:opacity 0.3s ease;
+    white-space:pre-wrap; font-size:13.5px; line-height:1.55; letter-spacing:0.3px;
+  }
+  #nebulaPanel.visible { opacity:1; }
+  #nebulaPanel .label { color:#9fd8ff; opacity:0.85; }
+  #nebulaPanel .cursor { display:inline-block; width:7px; background:#eaf6ff; margin-left:1px; animation:blink 0.9s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
 </style>
 </head>
 <body>
-<div id="loading">Cargando reconocimiento de la Luna...<br>(permití el acceso a la cámara cuando lo pida)</div>
+<div id="loading">Cargando reconocimiento...<br>(permití el acceso a la cámara cuando lo pida)</div>
 
 <div id="overlay"></div>
-<div id="hint" class="hidden">Apuntá la cámara a la foto de la Luna — tocá los puntos</div>
+<div id="hint" class="hidden">Apuntá la cámara a una obra</div>
+<div id="nebulaPanel"></div>
 
 <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: no; uiLoading: no; filterMinCF: 0.0001; filterBeta: 0.001; warmupTolerance: 3; missTolerance: 10;"
   color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights"
@@ -194,6 +160,10 @@ window.__arFound = false;
       <a-entity position="-0.046 -0.0587 0" screen-label="label: Mare Vaporum (Mar de los Vapores)"></a-entity>
   </a-entity>
 
+  <a-entity id="nebula-1" mindar-image-target="targetIndex: 1"></a-entity>
+  <a-entity id="nebula-2" mindar-image-target="targetIndex: 2"></a-entity>
+  <a-entity id="nebula-3" mindar-image-target="targetIndex: 3"></a-entity>
+
 </a-scene>
 
 <script>
@@ -201,15 +171,80 @@ window.__arFound = false;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('hint').classList.remove('hidden');
   });
-  var target = document.getElementById('target');
-  target.addEventListener('targetFound', function () {
-    window.__arFound = true;
+
+  var moonTarget = document.getElementById('target');
+  moonTarget.addEventListener('targetFound', function () {
+    window.__moonFound = true;
     document.getElementById('hint').classList.add('hidden');
   });
-  target.addEventListener('targetLost', function () {
-    window.__arFound = false;
+  moonTarget.addEventListener('targetLost', function () {
+    window.__moonFound = false;
     document.getElementById('hint').classList.remove('hidden');
   });
+
+  var panelEl = document.getElementById('nebulaPanel');
+  var typingTimer = null;
+  var activeIdx = null;
+
+  function buildText(d) {
+    return [
+      ['TÍTULO', d.titulo],
+      ['CATÁLOGO', d.catalogo],
+      ['TIPO', d.tipo],
+      ['CONSTELACIÓN', d.constelacion],
+      ['DISTANCIA', d.distancia]
+    ];
+  }
+
+  function showNebulaPanel(idx) {
+    var d = NEBULA_DATA[idx];
+    if (!d) return;
+    activeIdx = idx;
+    document.getElementById('hint').classList.add('hidden');
+    clearInterval(typingTimer);
+    panelEl.innerHTML = '';
+    panelEl.classList.add('visible');
+    var lines = buildText(d);
+    var flat = [];
+    lines.forEach(function (pair, li) {
+      flat.push({ type: 'label', text: pair[0] + '\n' });
+      flat.push({ type: 'value', text: pair[1] + (li < lines.length - 1 ? '\n\n' : '') });
+    });
+    var cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    panelEl.appendChild(cursor);
+    var chunkI = 0, charI = 0;
+    typingTimer = setInterval(function () {
+      if (activeIdx !== idx) { clearInterval(typingTimer); return; }
+      if (chunkI >= flat.length) { clearInterval(typingTimer); return; }
+      var chunk = flat[chunkI];
+      charI++;
+      var span = panelEl.querySelector('[data-chunk="' + chunkI + '"]');
+      if (!span) {
+        span = document.createElement('span');
+        span.setAttribute('data-chunk', chunkI);
+        if (chunk.type === 'label') span.className = 'label';
+        panelEl.insertBefore(span, cursor);
+      }
+      span.textContent = chunk.text.slice(0, charI);
+      if (charI >= chunk.text.length) { chunkI++; charI = 0; }
+    }, 18);
+  }
+
+  function hideNebulaPanel(idx) {
+    if (activeIdx !== idx) return;
+    activeIdx = null;
+    clearInterval(typingTimer);
+    panelEl.classList.remove('visible');
+    document.getElementById('hint').classList.remove('hidden');
+  }
+
+  document.getElementById("nebula-1").addEventListener("targetFound", function () { showNebulaPanel(1); });
+  document.getElementById("nebula-1").addEventListener("targetLost", function () { hideNebulaPanel(1); });
+  document.getElementById("nebula-2").addEventListener("targetFound", function () { showNebulaPanel(2); });
+  document.getElementById("nebula-2").addEventListener("targetLost", function () { hideNebulaPanel(2); });
+  document.getElementById("nebula-3").addEventListener("targetFound", function () { showNebulaPanel(3); });
+  document.getElementById("nebula-3").addEventListener("targetLost", function () { hideNebulaPanel(3); });
 </script>
 </body>
 </html>
